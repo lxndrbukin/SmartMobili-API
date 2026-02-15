@@ -1,0 +1,8 @@
+.idea
+__pycache__
+
+# ENV Variables
+.env
+
+# MD Files
+PROJECT.md
