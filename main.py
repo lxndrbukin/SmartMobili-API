@@ -1,10 +1,12 @@
-from fastapi import FastAPI, APIRouter
-from datetime import datetime
+from fastapi import FastAPI, APIRouter, Depends
 from routers.items import items_router
 from routers.categories import categories_router
 from routers.inquiries import inquiries_router
-from db import engine, Base
-from db_models.items import Item, Category, ItemImage
+from db import engine, Base, get_db
+from db_models.items import Item, ItemImage
+from db_models.categories import Category
+from sqlalchemy.orm import Session
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,9 +19,9 @@ v1_router.include_router(inquiries_router)
 app.include_router(v1_router)
 
 @app.get("/")
-def home():
+def home(db: Session = Depends(get_db)):
     return {
         "server": "SmartMobili API",
         "version": "1.0",
-        "current_date": str(datetime.today())
+        "total_items": db.query(Item).count()
     }

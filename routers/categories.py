@@ -1,25 +1,23 @@
 from fastapi import APIRouter, status, Depends
 from db import get_db
-from db_models.items import Category
+from models.categories import CategoryCreate, CategoryResponse
+from db_models.categories import Category
 from sqlalchemy.orm import Session
 
 categories_router = APIRouter(prefix="/categories", tags=["categories"])
 
-@categories_router.get("/", status_code=status.HTTP_200_OK)
-def get_categories():
-    pass
+@categories_router.get("/", status_code=status.HTTP_200_OK, response_model=list[CategoryResponse])
+def get_categories(db: Session = Depends(get_db)):
+    categories = db.query(Category).all()
+    return categories
 
-@categories_router.post("/", status_code=status.HTTP_201_CREATED)
-def create_category(category: str, db: Session = Depends(get_db)):
-    category = Category(
-        name=category,
-        slug=category.lower()
+@categories_router.post("/", status_code=status.HTTP_201_CREATED, response_model=CategoryResponse)
+def create_category(category: CategoryCreate, db: Session = Depends(get_db)):
+    db_category = Category(
+        name=category.name,
+        slug=category.name.lower().replace(" ", "-")
     )
-    db.add(category)
+    db.add(db_category)
     db.commit()
-    db.refresh(category)
-    return {
-        "success": True,
-        "message": "Category created",
-        "category": category
-    }
+    db.refresh(db_category)
+    return db_category

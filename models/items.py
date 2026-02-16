@@ -8,6 +8,11 @@ class ItemCreate(BaseModel):
     price: float | None = None
     category_id: int
 
+class ItemUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    price: float | None = None
+
 class ItemResponse(BaseModel):
     id: int
     title: str
