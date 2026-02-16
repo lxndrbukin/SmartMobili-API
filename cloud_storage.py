@@ -1,7 +1,6 @@
 from fastapi import UploadFile
 import cloudinary
 import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
 from dotenv import load_dotenv
 import os
 
@@ -20,7 +19,3 @@ cloudinary.config(
 
 def upload_result(file: UploadFile, category: str):
     return cloudinary.uploader.upload(file.file, folder=category)["secure_url"]
-
-optimize_url, _ = cloudinary_url("shoes", fetch_format="auto", quality="auto")
-
-auto_crop_url, _ = cloudinary_url("shoes", width=500, height=500, crop="auto", gravity="auto")
