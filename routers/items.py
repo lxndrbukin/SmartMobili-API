@@ -1,8 +1,10 @@
-from fastapi import APIRouter, status, Depends, HTTPException
-from models.items import ItemCreate, ItemUpdate, ItemResponse, PaginatedResponse, Pagination
+from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, File
+from models.items import ItemCreate, ItemUpdate, ItemResponse, PaginatedResponse, Pagination, ItemImageResponse
 from db import get_db
 from db_models.items import Item, ItemImage
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from pathlib import Path
+from uuid import uuid4
 
 items_router = APIRouter(prefix="/items", tags=["items"])
 
@@ -12,7 +14,7 @@ def get_items(
         limit: int = 10,
         db: Session = Depends(get_db)
     ):
-    items = db.query(Item).offset(skip).limit(limit).all()
+    items = db.query(Item).options(joinedload(Item.images)).offset(skip).limit(limit).all()
     return PaginatedResponse(
         data=items,
         pagination=Pagination(skip=skip, limit=limit)
@@ -20,7 +22,7 @@ def get_items(
 
 @items_router.get("/{item_id}", status_code=status.HTTP_200_OK, response_model=ItemResponse)
 def get_item(item_id: int, db: Session = Depends(get_db)):
-    item = db.query(Item).get(item_id)
+    item = db.query(Item).options(joinedload(Item.images)).get(item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     return item
@@ -66,3 +68,24 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return None
+
+@items_router.post("/{item_id}/images", response_model=ItemImageResponse)
+async def add_images(item_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)):
+    item = db.query(Item).get(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    upload_dir = Path("./static/images")
+    file_extension = Path(image.filename).suffix
+    unique_filename = f"{uuid4()}{file_extension}"
+    file_path = Path.joinpath(upload_dir, unique_filename)
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    with open(file_path, "wb") as f:
+        content = await image.read()
+        f.write(content)
+    image_url = f"/static/images/{unique_filename}"
+    existing_count = db.query(ItemImage).filter(ItemImage.item_id == item_id).count()
+    db_image = ItemImage(item_id=item.id, image_url=image_url, order=existing_count)
+    db.add(db_image)
+    db.commit()
+    db.refresh(db_image)
+    return db_image
