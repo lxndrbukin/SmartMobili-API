@@ -1,12 +1,9 @@
 from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, File
-
 from db_models.categories import Category
 from models.items import ItemCreate, ItemUpdate, ItemResponse, PaginatedResponse, Pagination, ItemImageResponse
 from db import get_db
 from db_models.items import Item, ItemImage
 from sqlalchemy.orm import Session, joinedload
-from pathlib import Path
-from uuid import uuid4
 from cloud_storage import upload_result
 
 items_router = APIRouter(prefix="/items", tags=["items"])
