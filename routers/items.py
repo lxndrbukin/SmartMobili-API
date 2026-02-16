@@ -1,10 +1,13 @@
 from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, File
+
+from db_models.categories import Category
 from models.items import ItemCreate, ItemUpdate, ItemResponse, PaginatedResponse, Pagination, ItemImageResponse
 from db import get_db
 from db_models.items import Item, ItemImage
 from sqlalchemy.orm import Session, joinedload
 from pathlib import Path
 from uuid import uuid4
+from cloud_storage import upload_result
 
 items_router = APIRouter(prefix="/items", tags=["items"])
 
@@ -56,7 +59,6 @@ def update_item(item_id: int, data: ItemUpdate, db: Session = Depends(get_db)):
         item.category_id = data.category_id
     db.commit()
     db.refresh(item)
-
     return item
 
 @items_router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -74,17 +76,14 @@ async def add_images(item_id: int, image: UploadFile = File(...), db: Session = 
     item = db.query(Item).get(item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    upload_dir = Path("./static/images")
-    file_extension = Path(image.filename).suffix
-    unique_filename = f"{uuid4()}{file_extension}"
-    file_path = Path.joinpath(upload_dir, unique_filename)
-    upload_dir.mkdir(parents=True, exist_ok=True)
-    with open(file_path, "wb") as f:
-        content = await image.read()
-        f.write(content)
-    image_url = f"/static/images/{unique_filename}"
+    category = db.query(Category).get(item.category_id)
+    image_url = upload_result(image, category.name)
     existing_count = db.query(ItemImage).filter(ItemImage.item_id == item_id).count()
-    db_image = ItemImage(item_id=item.id, image_url=image_url, order=existing_count)
+    db_image = ItemImage(
+        item_id=item.id,
+        image_url=image_url,
+        order=existing_count
+    )
     db.add(db_image)
     db.commit()
     db.refresh(db_image)
