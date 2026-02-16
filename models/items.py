@@ -2,18 +2,18 @@ from pydantic import BaseModel
 from typing import List
 from datetime import datetime
 
-class Item(BaseModel):
+class ItemCreate(BaseModel):
     title: str
     description: str | None = None
     price: float | None = None
-    category: str
+    category_id: int
 
 class ItemResponse(BaseModel):
     id: int
     title: str
     description: str | None = None
     price: float | None = None
-    category: str
+    category_id: int
     created_at: datetime
 
     class Config:
