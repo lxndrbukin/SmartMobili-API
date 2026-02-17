@@ -7,15 +7,24 @@ class Item(Base):
     __tablename__ = "items"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(200), nullable=False)
-    description = Column(Text)
     price = Column(Float)
     category_id = Column(Integer, ForeignKey("categories.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 
     category = relationship("Category", back_populates="items")
+    images = relationship("ItemImage", back_populates="item", cascade="all, delete-orphan")
+    translations = relationship("ItemTranslation", back_populates="item", cascade="all, delete-orphan")
 
-    images = relationship("ItemImage", back_populates="item")
+class ItemTranslation(Base):
+    __tablename__ = "item_translations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    item_id = Column(Integer, ForeignKey("items.id"))
+    language = Column(String(2), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text)
+
+    item = relationship("Item", back_populates="translations")
 
 class ItemImage(Base):
     __tablename__ = "item_images"
