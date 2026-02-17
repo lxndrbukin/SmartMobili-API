@@ -4,7 +4,7 @@ from models.items import ItemCreate, ItemUpdate, ItemResponse, PaginatedResponse
 from db import get_db
 from db_models.items import Item, ItemImage
 from sqlalchemy.orm import Session, joinedload
-from cloud_storage import upload_result
+from cloud_storage import upload_item_image, delete_item_image
 
 items_router = APIRouter(prefix="/items", tags=["items"])
 
@@ -69,12 +69,12 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
     return None
 
 @items_router.post("/{item_id}/images", response_model=ItemImageResponse)
-async def add_images(item_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)):
+def add_images(item_id: int, image: UploadFile = File(...), db: Session = Depends(get_db)):
     item = db.query(Item).get(item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
     category = db.query(Category).get(item.category_id)
-    image_url = upload_result(image, category.name)
+    image_url = upload_item_image(image, category.name)
     existing_count = db.query(ItemImage).filter(ItemImage.item_id == item_id).count()
     db_image = ItemImage(
         item_id=item.id,
@@ -85,3 +85,16 @@ async def add_images(item_id: int, image: UploadFile = File(...), db: Session = 
     db.commit()
     db.refresh(db_image)
     return db_image
+
+@items_router.delete("/{item_id}/images/{image_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_image(item_id: int, image_id: int, db: Session = Depends(get_db)):
+    item = db.query(Item).get(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    image = db.query(ItemImage).get(image_id)
+    if not image or image.item_id != item.id:
+        raise HTTPException(status_code=404, detail="Image not found")
+    delete_item_image(image.image_url)
+    db.delete(image)
+    db.commit()
+    return None

@@ -17,5 +17,11 @@ cloudinary.config(
     secure=True
 )
 
-def upload_result(file: UploadFile, category: str):
+def upload_item_image(file: UploadFile, category: str):
     return cloudinary.uploader.upload(file.file, folder=category)["secure_url"]
+
+def delete_item_image(image_url: str):
+    after_upload = image_url.split("upload/")[1]
+    without_version = after_upload.split("/", 1)[1]
+    public_id = without_version.rsplit(".", 1)[0]
+    cloudinary.uploader.destroy(public_id)
