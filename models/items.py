@@ -1,11 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List
 from datetime import datetime
-from enum import Enum
-
-class Language(str, Enum):
-    ro = "ro"
-    ru = "ru"
+from utils import Language
 
 class ItemImageResponse(BaseModel):
     id: int
@@ -18,13 +14,17 @@ class ItemImageResponse(BaseModel):
 class ItemTranslationCreate(BaseModel):
     language: Language
     title: str
-    description: str | None
+    description: str | None = None
+
+class ItemTranslationUpdate(BaseModel):
+    title: str
+    description: str | None = None
 
 class ItemTranslationResponse(BaseModel):
     id: int
     language: Language
     title: str
-    description: str | None
+    description: str | None = None
 
     class Config:
         from_attributes = True
@@ -33,6 +33,14 @@ class ItemCreate(BaseModel):
     price: float | None = None
     category_id: int
     translations: list[ItemTranslationCreate]
+
+    @field_validator("translations")
+    def romanian_required(cls, translations):
+        languages = [t.language for t in translations]
+        if Language.ro not in languages:
+            raise ValueError("Romanian (ro) text is required")
+        return translations
+
 
 class ItemUpdate(BaseModel):
     price: float | None = None
@@ -43,11 +51,10 @@ class ItemResponse(BaseModel):
     price: float | None = None
     category_id: int
     created_at: datetime
-    translations: list[ItemTranslationResponse]
+    title: str
+    description: str | None
+    language: Language
     images: list[ItemImageResponse] = []
-
-    class Config:
-        from_attributes = True
 
 class Pagination(BaseModel):
     skip: int

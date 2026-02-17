@@ -1,12 +1,11 @@
-from pydantic import BaseModel
-from enum import Enum
-
-class Language(str, Enum):
-    ro = "ro"
-    ru = "ru"
+from pydantic import BaseModel, field_validator
+from utils import Language
 
 class CategoryTranslationCreate(BaseModel):
     language: Language
+    name: str
+
+class CategoryTranslationUpdate(BaseModel):
     name: str
 
 class CategoryTranslationResponse(BaseModel):
@@ -21,10 +20,18 @@ class CategoryCreate(BaseModel):
     slug: str
     translations: list[CategoryTranslationCreate]
 
+    @field_validator("translations")
+    def romanian_required(cls, translations):
+        languages = [t.language for t in translations]
+        if Language.ro not in languages:
+            raise ValueError("Romanian (ro) text is required")
+        return translations
+
+class CategoryUpdate(BaseModel):
+    slug: str | None = None
+
 class CategoryResponse(BaseModel):
     id: int
     slug: str
-    translations: list[CategoryTranslationResponse]
-
-    class Config:
-        from_attributes = True
+    name: str
+    language: Language
