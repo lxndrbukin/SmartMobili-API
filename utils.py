@@ -1,8 +1,13 @@
 from enum import Enum
+from pydantic import BaseModel
 
 class Language(str, Enum):
     ro = "ro"
     ru = "ru"
+
+class Pagination(BaseModel):
+    skip: int
+    limit: int
 
 def get_translation(translations, lang: Language):
     translation = next(

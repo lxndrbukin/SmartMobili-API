@@ -1,7 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import List
 from datetime import datetime
-from utils import Language
+from utils import Language, Pagination
 
 class ItemImageResponse(BaseModel):
     id: int
@@ -55,10 +55,6 @@ class ItemResponse(BaseModel):
     description: str | None
     language: Language
     images: list[ItemImageResponse] = []
-
-class Pagination(BaseModel):
-    skip: int
-    limit: int
 
 class PaginatedResponse(BaseModel):
     data: List[ItemResponse]
