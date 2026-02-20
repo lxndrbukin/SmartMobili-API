@@ -1,6 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-
 from db import Base
 from datetime import datetime
 
@@ -19,4 +18,4 @@ class Inquiry(Base):
     whatsapp = Column(Boolean)
     viber = Column(Boolean)
 
-    item = relationship("Item")
+    item = relationship("Item", back_populates="inquiries")

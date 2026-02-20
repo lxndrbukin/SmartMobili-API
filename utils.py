@@ -9,6 +9,10 @@ class Pagination(BaseModel):
     skip: int
     limit: int
 
+class UserRole(str, Enum):
+    user = "user"
+    admin = "admin"
+
 def get_translation(translations, lang: Language):
     translation = next(
         (t for t in translations if t.language == lang),
