@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from routers.items import items_router
 from routers.categories import categories_router
 from routers.inquiries import inquiries_router
@@ -17,6 +18,13 @@ v1_router.include_router(items_router)
 v1_router.include_router(categories_router)
 v1_router.include_router(inquiries_router)
 app.include_router(v1_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home(db: Session = Depends(get_db)):
